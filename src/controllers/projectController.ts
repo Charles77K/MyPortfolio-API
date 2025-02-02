@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import Project from "../models/projectModel";
 import { catchAsync } from "../utils/catchAsync";
 import { AppError } from "../utils/AppError";
-import { upload } from "../utils/multer";
+import { upload, uploadToCloudinary } from "../utils/multer";
 import APIFeatures from "../utils/apiFeatures";
 
 export const getAllProjects = catchAsync(
@@ -22,23 +22,28 @@ export const getAllProjects = catchAsync(
     });
   }
 );
-
-export const uploadProjectImages = upload("../uploads/projects").array(
-  "images",
-  5
-);
+const handleMultipleUploads = async (files: Express.Multer.File[]) => {
+  try {
+    const uploadedPromises = files.map((file) => uploadToCloudinary(file));
+    const results = await Promise.all(uploadedPromises);
+    return results.map((result) => result.secure_url);
+  } catch (error) {
+    throw new AppError("Error uploading images", 400);
+  }
+};
+export const uploadProjectImages = upload().array("images", 5);
 
 export const createProject = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { title, description, git, stack, link, developers } = req.body;
 
-    const images = req.files
-      ? (req.files as Express.Multer.File[]).map((file) => file.filename)
+    const imageUrls = req.files
+      ? await handleMultipleUploads(req.files as Express.Multer.File[])
       : [];
 
     const newProject = new Project({
       title,
-      images,
+      images: imageUrls,
       description,
       git,
       stack,
@@ -67,9 +72,9 @@ export const updateProject = catchAsync(
     }
 
     let updatedImages = project.images;
-    if (req.files) {
-      updatedImages = (req.files as Express.Multer.File[]).map(
-        (file) => file.filename
+    if (req.files && (req.files as Express.Multer.File[]).length > 0) {
+      updatedImages = await handleMultipleUploads(
+        req.files as Express.Multer.File[]
       );
     }
     project.title = title || project.title;
@@ -77,7 +82,7 @@ export const updateProject = catchAsync(
     project.git = git || project.git;
     project.stack = stack || project.stack;
     project.link = link || project.link;
-    project.images = updatedImages || project.images;
+    project.images = updatedImages;
     project.developers = developers || project.developers;
 
     const newProject = await project.save();

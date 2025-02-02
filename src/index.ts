@@ -2,7 +2,10 @@ import express, { Application } from "express";
 import connectDB from "./db/server";
 import dotenv from "dotenv";
 import { globalErrorHandler } from "./utils/errorHandler";
+
 const cors = require("cors");
+
+dotenv.config({ path: "./config.env" });
 
 const app: Application = express();
 
@@ -13,7 +16,7 @@ app.use(cors());
 
 app.use(express.json());
 
-dotenv.config({ path: "./config.env" });
+console.log("pprt", process.env.PORT);
 
 app.use("/api/v1/blogs", blogRouter);
 app.use("/api/v1/projects", projectRouter);

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import Blog from "../models/blogModel";
 import { catchAsync } from "../utils/catchAsync";
-import { upload } from "../utils/multer";
+import { upload, uploadToCloudinary } from "../utils/multer";
 import { AppError } from "../utils/AppError";
 import APIFeatures from "../utils/apiFeatures";
 
@@ -22,23 +22,24 @@ export const getAllBlogs = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const uploadBlogImage = upload("../uploads/blogs").single("photo");
+export const uploadBlogImage = upload().single("photo");
 
 export const createBlog = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const { title, content, author } = req.body;
 
-    const uploadedImage = req.file?.filename;
+    let imageURL = null;
 
-    if (!uploadedImage) {
-      return next(new AppError("Please provide a valid image", 404));
+    if (req.file) {
+      const uploadedResult = await uploadToCloudinary(req.file);
+      imageURL = uploadedResult.secure_url;
     }
 
     const newBlog = new Blog({
       title,
       content,
       author,
-      photo: uploadedImage,
+      photo: imageURL,
     });
 
     const blog = await newBlog.save();
@@ -64,13 +65,14 @@ export const updateBlog = catchAsync(
 
     let updatedImage = blog.photo;
     if (req.file) {
-      updatedImage = req.file.filename;
+      const uploadedImage = await uploadToCloudinary(req.file);
+      updatedImage = uploadedImage.secure_url;
     }
 
     blog.title = title || blog.title;
     blog.content = content || blog.content;
     blog.author = author || blog.author;
-    blog.photo = updatedImage || blog.photo;
+    blog.photo = updatedImage;
 
     const updatedBlog = await blog.save();
     res.status(200).json({
