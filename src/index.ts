@@ -11,15 +11,15 @@ const app: Application = express();
 
 import projectRouter from "./routes/projectRoutes";
 import blogRouter from "./routes/blogRoutes";
+import messageRouter from "./routes/messageRoutes";
 
 app.use(cors());
 
 app.use(express.json());
 
-console.log("pprt", process.env.PORT);
-
 app.use("/api/v1/blogs", blogRouter);
 app.use("/api/v1/projects", projectRouter);
+app.use("/api/v1/message", messageRouter);
 
 connectDB();
 
