@@ -13,8 +13,8 @@ interface ProjectType extends Document {
     name: string;
     github: string;
     email: string;
-    link: string;
     role: string;
+    stack: string[];
   }[];
   createdAt: Date;
 }
@@ -32,8 +32,8 @@ const ProjectSchema = new Schema({
       name: { type: String, required: true },
       github: { type: String, required: true },
       email: { type: String, required: true },
-      link: { type: String },
       role: { type: String, required: true },
+      stack: [{ type: String, required: true }],
     },
   ],
   createdAt: { type: Date, default: Date.now },
