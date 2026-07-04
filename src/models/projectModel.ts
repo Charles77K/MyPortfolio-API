@@ -5,16 +5,16 @@ interface ProjectType extends Document {
   title: string;
   images: string[];
   description: string;
-  git: string;
-  slug: string;
+  git?: string;
+  slug?: string;
   stack: string[];
   link: string;
   developers: {
     name: string;
-    github: string;
+    github?: string;
     email: string;
     role: string;
-    stack: string[];
+    stack?: string[];
   }[];
   createdAt: Date;
 }
@@ -23,17 +23,17 @@ const ProjectSchema = new Schema({
   title: { type: String, required: true, unique: true },
   images: [{ type: String }],
   description: { type: String, required: true },
-  git: { type: String, required: true },
+  git: String,
   stack: [{ type: String }],
   link: String,
   slug: String,
   developers: [
     {
       name: { type: String, required: true },
-      github: { type: String, required: true },
+      github: { type: String },
       email: { type: String, required: true },
       role: { type: String, required: true },
-      stack: [{ type: String, required: true }],
+      stack: [{ type: String }],
     },
   ],
   createdAt: { type: Date, default: Date.now },
